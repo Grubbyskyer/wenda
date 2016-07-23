@@ -2,23 +2,19 @@ package me.tianxing.controller;
 
 import me.tianxing.constants.StringConstants;
 import me.tianxing.service.UserService;
+import me.tianxing.util.GeetestLib;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
-
-import static com.sun.xml.internal.ws.api.model.wsdl.WSDLBoundOperation.ANONYMOUS.required;
-import static org.aspectj.weaver.tools.cache.SimpleCacheFactory.path;
 
 /**
  * Created by TX on 2016/7/22.
@@ -35,7 +31,25 @@ public class LoginController {
                            @RequestParam("password") String password,
                            @RequestParam(value = "rememberme", defaultValue = "false") boolean rememberme,
                            @RequestParam(value = "callback", required = false) String callback,
+                           @RequestParam("geetest_challenge") String challenge,
+                           @RequestParam("geetest_validate") String validate,
+                           @RequestParam("geetest_seccode") String seccode,
+                           HttpServletRequest httpServletRequest,
                            HttpServletResponse response) {
+        int gtResult = 0;
+        try {
+            int gtcode = (Integer) httpServletRequest.getSession().getAttribute("gt_server_status");
+            String gtuserid = (String) httpServletRequest.getSession().getAttribute("gt_user_id");
+            gtResult = userService.geetest(challenge, validate, seccode, gtcode, gtuserid);
+        } catch (Exception e) {
+            logger.error("注册验证码异常！" + e.getMessage());
+            model.addAttribute("msg", StringConstants.TEST_CODE_SERVER_ERROR);
+            return "login";
+        }
+        if (gtResult != 1) {
+            model.addAttribute("msg", StringConstants.WRONG_TEST_CODE);
+            return "login";
+        }
         try {
             Map<String, String> map = userService.register(username, password);
             // map包含ticket或者msg
@@ -70,7 +84,25 @@ public class LoginController {
                         @RequestParam("password") String password,
                         @RequestParam(value = "rememberme", defaultValue = "false") boolean rememberme,
                         @RequestParam(value = "callback", required = false) String callback,
+                        @RequestParam("geetest_challenge") String challenge,
+                        @RequestParam("geetest_validate") String validate,
+                        @RequestParam("geetest_seccode") String seccode,
+                        HttpServletRequest httpServletRequest,
                         HttpServletResponse response) {
+        int gtResult = 0;
+        try {
+            int gtcode = (Integer) httpServletRequest.getSession().getAttribute("gt_server_status");
+            String gtuserid = (String) httpServletRequest.getSession().getAttribute("gt_user_id");
+            gtResult = userService.geetest(challenge, validate, seccode, gtcode, gtuserid);
+        } catch (Exception e) {
+            logger.error("登录验证码异常！" + e.getMessage());
+            model.addAttribute("msg", StringConstants.TEST_CODE_SERVER_ERROR);
+            return "login";
+        }
+        if (gtResult != 1) {
+            model.addAttribute("msg", StringConstants.WRONG_TEST_CODE);
+            return "login";
+        }
         try {
             Map<String, String> map = userService.login(username, password);
             // map包含ticket或者msg
@@ -112,6 +144,24 @@ public class LoginController {
     public String reglogin(Model model, @RequestParam(value = "callback", defaultValue = "", required = false) String callback) {
         model.addAttribute("callback", callback);
         return "login";
+    }
+
+    // 初始化验证码
+    @RequestMapping(path = {"/initgee"}, method = {RequestMethod.GET})
+    @ResponseBody
+    public String initGeetest(HttpServletRequest httpServletRequest) {
+        GeetestLib geetestLib = new GeetestLib(StringConstants.CAPTCHA_ID, StringConstants.PRIVATE_KEY);
+        String resStr = "{}";
+        //自定义userid
+        String userid = "test";
+        //进行验证预处理
+        int gtServerStatus = geetestLib.preProcess(userid);
+        //将服务器状态设置到session中
+        httpServletRequest.getSession().setAttribute(geetestLib.gtServerStatusSessionKey, gtServerStatus);
+        //将userid设置到session中
+        httpServletRequest.getSession().setAttribute("gt_user_id", userid);
+        resStr = geetestLib.getResponseStr();
+        return resStr;
     }
 
 }

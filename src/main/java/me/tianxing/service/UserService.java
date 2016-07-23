@@ -5,6 +5,7 @@ import me.tianxing.dao.LoginTicketDAO;
 import me.tianxing.dao.UserDAO;
 import me.tianxing.model.LoginTicket;
 import me.tianxing.model.User;
+import me.tianxing.util.GeetestLib;
 import me.tianxing.util.WendaUtil;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,27 @@ public class UserService {
 
     @Autowired
     LoginTicketDAO loginTicketDAO;
+
+    // geetest二次验证结果
+    public int geetest(String challenge, String validate, String seccode,
+                       int gt_server_status_code, String userid) {
+        int gtResult = 0;
+        GeetestLib gtSdk = new GeetestLib(StringConstants.CAPTCHA_ID, StringConstants.PRIVATE_KEY);
+        if (gt_server_status_code == 1) {
+            //gt-server正常，向gt-server进行二次验证
+
+            gtResult = gtSdk.enhencedValidateRequest(challenge, validate, seccode, userid);
+//            System.out.println(gtResult);
+        } else {
+            // gt-server非正常情况下，进行failback模式验证
+
+//            System.out.println("failback:use your own server captcha validate");
+            gtResult = gtSdk.failbackValidateRequest(challenge, validate, seccode);
+//            System.out.println(gtResult);
+            gtResult = 1; // 这里没有备用机制，先置为成功
+        }
+        return gtResult;
+    }
 
     // 注册功能
     public Map<String, String> register(String username, String password) {
