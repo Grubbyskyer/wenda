@@ -21,7 +21,7 @@ public class LoginRequiredInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
         // 如果找不到用户的登录信息，则打断后续的页面渲染，跳转到登录注册界面，并且把跳转前访问的URL传过去
         if (hostHolder.getUser() == null) {
-            httpServletResponse.sendRedirect("/reglogin?callback=" + httpServletRequest.getRequestURL());
+            httpServletResponse.sendRedirect("/login?callback=" + httpServletRequest.getRequestURL());
             return false;
         }
         return true;

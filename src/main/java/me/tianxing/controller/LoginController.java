@@ -26,10 +26,10 @@ public class LoginController {
     @Autowired
     UserService userService;
 
-    @RequestMapping(path = {"/register/"}, method = {RequestMethod.POST})
-    public String register(Model model, @RequestParam("username") String username,
+    // 提交注册的数据
+    @RequestMapping(path = {"/regpost/"}, method = {RequestMethod.POST})
+    public String regpost(Model model, @RequestParam("username") String username,
                            @RequestParam("password") String password,
-                           @RequestParam(value = "rememberme", defaultValue = "false") boolean rememberme,
                            @RequestParam(value = "callback", required = false) String callback,
                            @RequestParam("geetest_challenge") String challenge,
                            @RequestParam("geetest_validate") String validate,
@@ -44,11 +44,11 @@ public class LoginController {
         } catch (Exception e) {
             logger.error("注册验证码异常！" + e.getMessage());
             model.addAttribute("msg", StringConstants.TEST_CODE_SERVER_ERROR);
-            return "login";
+            return "txregister";
         }
         if (gtResult != 1) {
             model.addAttribute("msg", StringConstants.WRONG_TEST_CODE);
-            return "login";
+            return "txregister";
         }
         try {
             Map<String, String> map = userService.register(username, password);
@@ -57,9 +57,8 @@ public class LoginController {
             if (map.containsKey("ticket")) {
                 Cookie cookie = new Cookie("ticket", map.get("ticket"));
                 cookie.setPath("/");
-                if (rememberme) { // 如果点击了<记住我>，那么为其设置cookie的存活时间
-                    cookie.setMaxAge(3600 * 24 * 5); // 设置存活5天 默认值为-1表示关闭浏览器就消失
-                }
+                // 注册完默认为添加cookie，那么为其设置cookie的存活时间
+                cookie.setMaxAge(3600 * 24 * 5); // 设置存活5天 默认值为-1表示关闭浏览器就消失
                 // 为浏览器添加cookie
                 response.addCookie(cookie);
                 // 如果有回调URL，判断该URL是不是一个站内地址，如果是则返回该URL
@@ -70,17 +69,18 @@ public class LoginController {
                 return "redirect:/";
             } else { // 注册失败，返回到登录注册界面，此时包含"msg"子段
                 model.addAttribute("msg", map.get("msg"));
-                return "login";
+                return "txregister";
             }
         } catch (Exception e) {
             logger.error("注册异常！" + e.getMessage());
             model.addAttribute("msg", StringConstants.SERVER_ERROR);
-            return "login";
+            return "txregister";
         }
     }
 
-    @RequestMapping(path = {"/login/"}, method = {RequestMethod.POST})
-    public String login(Model model, @RequestParam("username") String username,
+    // 提交登录数据
+    @RequestMapping(path = {"/loginpost/"}, method = {RequestMethod.POST})
+    public String loginpost(Model model, @RequestParam("username") String username,
                         @RequestParam("password") String password,
                         @RequestParam(value = "rememberme", defaultValue = "false") boolean rememberme,
                         @RequestParam(value = "callback", required = false) String callback,
@@ -97,11 +97,11 @@ public class LoginController {
         } catch (Exception e) {
             logger.error("登录验证码异常！" + e.getMessage());
             model.addAttribute("msg", StringConstants.TEST_CODE_SERVER_ERROR);
-            return "login";
+            return "txlogin";
         }
         if (gtResult != 1) {
             model.addAttribute("msg", StringConstants.WRONG_TEST_CODE);
-            return "login";
+            return "txlogin";
         }
         try {
             Map<String, String> map = userService.login(username, password);
@@ -123,12 +123,12 @@ public class LoginController {
                 return "redirect:/";
             } else { // 登录失败，返回到登录注册界面，此时包含"msg"子段
                 model.addAttribute("msg", map.get("msg"));
-                return "login";
+                return "txlogin";
             }
         } catch (Exception e) {
             logger.error("登录异常！" + e.getMessage());
             model.addAttribute("msg", StringConstants.SERVER_ERROR);
-            return "login";
+            return "txlogin";
         }
     }
 
@@ -140,11 +140,12 @@ public class LoginController {
     }
 
     // 注册和登录的界面，方法用GET，因为是读取界面而不是提交数据
-    @RequestMapping(path = {"/reglogin"}, method = {RequestMethod.GET})
-    public String reglogin(Model model, @RequestParam(value = "callback", defaultValue = "", required = false) String callback) {
-        model.addAttribute("callback", callback);
-        return "login";
-    }
+    // 该方法已过期，请勿使用
+//    @RequestMapping(path = {"/reglogin"}, method = {RequestMethod.GET})
+//    public String reglogin(Model model, @RequestParam(value = "callback", defaultValue = "", required = false) String callback) {
+//        model.addAttribute("callback", callback);
+//        return "login";
+//    }
 
     // 初始化验证码
     @RequestMapping(path = {"/initgee"}, method = {RequestMethod.GET})
@@ -162,6 +163,20 @@ public class LoginController {
         httpServletRequest.getSession().setAttribute("gt_user_id", userid);
         resStr = geetestLib.getResponseStr();
         return resStr;
+    }
+
+    // 注册界面
+    @RequestMapping(path = {"/register"}, method = {RequestMethod.GET})
+    public String register(Model model, @RequestParam(value = "callback", defaultValue = "", required = false) String callback) {
+        model.addAttribute("callback", callback);
+        return "txregister";
+    }
+
+    // 登录界面
+    @RequestMapping(path = {"/login"}, method = {RequestMethod.GET})
+    public String login(Model model, @RequestParam(value = "callback", defaultValue = "", required = false) String callback) {
+        model.addAttribute("callback", callback);
+        return "txlogin";
     }
 
 }
