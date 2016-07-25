@@ -6,6 +6,8 @@ package me.tianxing.constants;
 public interface StringConstants {
     // 网站的主地址
     String DOMAIN_NAME = "http://localhost:8080";
+    // 功能尚在开发中
+    String FUNCTION_NOT_COMPLETED = "功能尚在开发中...";
 
     // geetest的id和key
     String CAPTCHA_ID = "9adf0d24b6611566c0b84aa83b368322";

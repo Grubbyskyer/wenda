@@ -1,5 +1,6 @@
 package me.tianxing.controller;
 
+import me.tianxing.constants.StringConstants;
 import me.tianxing.model.Question;
 import me.tianxing.model.ViewObject;
 import me.tianxing.service.QuestionService;
@@ -13,6 +14,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +55,12 @@ public class HomeController {
             vos.add(vo);
         }
         return vos;
+    }
+
+    @RequestMapping(path = {"/todo"}, method = {RequestMethod.GET})
+    @ResponseBody
+    public String todo() {
+        return StringConstants.FUNCTION_NOT_COMPLETED;
     }
 
 }
